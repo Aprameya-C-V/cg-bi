@@ -23,7 +23,8 @@ async def evaluate_model(model, samples: list[Sample], *, concurrency: int = 5) 
     async def one(sample: Sample) -> None:
         async with semaphore:
             result = await model.inspect_image(sample.image, WIDE)
-            pred = []
+            pred, conf = [], {}
+            notes, severity = "", "none"
             if result.raw:
                 try:
                     payload = json.loads(result.raw["candidates"][0]["content"]["parts"][0]["text"])
@@ -32,7 +33,17 @@ async def evaluate_model(model, samples: list[Sample], *, concurrency: int = 5) 
                         payload = json.loads(result.raw["choices"][0]["message"]["content"])
                     except Exception:
                         payload = {}
-                pred = [c for c in payload.get("defects", []) if c in CLASSES]
+                raw_defects = payload.get("defects", [])
+                pred, conf = [], {}
+                for item in raw_defects:
+                    if isinstance(item, dict):
+                        label = item.get("label") or item.get("class") or ""
+                        if label in CLASSES:
+                            pred.append(label)
+                            conf[label] = float(item.get("confidence") or 0.0)
+                    elif isinstance(item, str) and item in CLASSES:
+                        pred.append(item)
+                        conf[item] = 0.0
                 notes = payload.get("notes", "")
                 severity = payload.get("severity", "none")
             else:
@@ -43,6 +54,8 @@ async def evaluate_model(model, samples: list[Sample], *, concurrency: int = 5) 
                     "name": sample.image.stem,
                     "gold": sample.classes,
                     "pred": sorted(set(pred)),
+                    "confidence": conf,
+                    "max_confidence": max(conf.values()) if conf else 0.0,
                     "severity": severity,
                     "notes": notes,
                     "prompt_tokens": result.prompt_tokens,
@@ -89,8 +102,23 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     crit_hit = sum(1 for r in crit if set(r["pred"]) & CRITICAL)
     lat = [r["latency_ms"] for r in rows if not r["error"]]
     cost = sum(r["cost_usd"] for r in rows)
+    thresholds = [0.5, 0.6, 0.7, 0.8, 0.9]
+    selective = []
+    for t in thresholds:
+        covered = [r for r in rows if r.get("max_confidence", 0) >= t]
+        exact_c = sum(1 for r in covered if set(r["gold"]) == set(r["pred"])) / len(covered) if covered else 0.0
+        crit_c = [r for r in covered if set(r["gold"]) & CRITICAL]
+        c_hit = sum(1 for r in crit_c if set(r["pred"]) & CRITICAL)
+        selective.append({
+            "threshold": t,
+            "coverage": len(covered) / n if n else 0.0,
+            "exact_match": exact_c,
+            "critical_recall": c_hit / len(crit_c) if crit_c else 0.0,
+        })
+
     return {
         "n": n,
+        "selective": selective,
         "errors": sum(1 for r in rows if r["error"]),
         "exact_set_match": exact,
         "precision": precision,

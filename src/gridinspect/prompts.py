@@ -10,11 +10,11 @@ The defect taxonomy is fixed:
 - crack: visible structural crack
 
 Return JSON only:
-{{"defects": [class names present, subset of the taxonomy],
+{{"defects": [{{"label": "class name", "confidence": 0.0}}],
  "severity": "low|medium|high",
  "location": "short phrase, for example leading edge mid-span",
  "notes": "one sentence a technician can act on"}}
-Use only the taxonomy names. If nothing is visible, return an empty defects list."""
+Use only the taxonomy names. Confidence is your own 0 to 1 estimate that the class is present. If nothing is visible, return an empty defects list."""
 
 VIDEO = f"""You are reviewing a short aerial sweep along a wind turbine blade.
 For each second of the clip decide which defects are visible. The taxonomy is fixed:

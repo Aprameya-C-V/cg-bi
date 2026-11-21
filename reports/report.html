@@ -29,47 +29,58 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#e9e4d8;
 </style></head><body><div class="bar"></div><main>
 <p class="eyebrow">Industry study · Renewable energy O&amp;M · November 2026</p>
 <h1>Blade Inspection Copilot</h1>
-<p class="lede">Drone photos of wind turbine blades, triaged by a multimodal model that names the defect, grades severity, and drafts the technician note. Measured on 75 real inspection images from a public drone dataset, with Gemini 3.5 Flash Lite against DeepSeek V4.1 Flash.</p>
+<p class="lede">Drone photos of wind turbine blades, triaged by a multimodal model that names the defect, grades severity, and drafts the technician note. Three model tiers, 75 real inspection images, and a confidence gate for routing.</p>
 
 <h2>The business problem</h2>
-<p>Blade inspection is a documentation bottleneck, not a photography problem. A drone captures hundreds of images per turbine, and an engineer still writes a finding for each one: defect type, severity, location, and an action. The taxonomy is fixed across the fleet, so inconsistent wording and slow write-ups cost real hours and make trend analysis unreliable.</p>
-<p>The copilot does not replace the engineer. It produces a first-pass finding per image in about two seconds, in one taxonomy, and a human approves or corrects it.</p>
+<p>Blade inspection is a documentation bottleneck. A drone captures hundreds of images per turbine and an engineer still writes a finding for each one: type, severity, location, action. The taxonomy is fixed across the fleet, so inconsistent wording and slow write-ups cost hours and break trend analysis.</p>
+<p>The copilot drafts the finding in about two seconds. The engineer approves or corrects it. Because tiers differ by six-fold in cost, the routing decision matters as much as the model choice.</p>
 
-<h2>Results</h2>
-<table><thead><tr><th>model</th><th>images</th><th>exact set match</th><th>class-set F1</th><th>critical recall</th><th>cost / 1,000</th><th>p50</th><th>p95</th></tr></thead><tbody>
-<tr><td>Gemini 3.5 Flash Lite</td><td>75</td><td>21.3%</td><td>0.360</td><td>69.2%</td><td>$0.46</td><td>1.96s</td><td>37.2s</td></tr>
+<h2>Results by tier</h2>
+<table><thead><tr><th>model</th><th>images</th><th>exact set</th><th>class F1</th><th>critical recall</th><th>cost / 1,000</th><th>p50</th><th>p95</th></tr></thead><tbody>
+<tr><td>Gemini 3.5 Flash Lite</td><td>75</td><td>17.3%</td><td>0.323</td><td>50.0%</td><td>$0.43</td><td>1.33s</td><td>20.5s</td></tr>
+<tr><td>Gemini 4 Argon via gateway</td><td>75</td><td>14.7%</td><td>0.417</td><td>96.2%</td><td>$3.64</td><td>5.71s</td><td>7.3s</td></tr>
 <tr><td>DeepSeek V4.1 Flash</td><td>75</td><td>9.3%</td><td>0.169</td><td>7.7%</td><td>$0.40</td><td>6.59s</td><td>46.5s</td></tr>
+<tr><td>Routed cascade (Lite then Argon)</td><td>75</td><td>25.3%</td><td>0.424</td><td>92.3%</td><td>$1.73</td><td>4.01s</td><td>n/a</td></tr>
 </tbody></table>
-<p class="note">Critical recall counts crack and thunderstrike together: the two classes where a miss has a maintenance consequence. Exact set match requires the model to name exactly the annotated class set.</p>
-<figure><img src="figures/model-compare.png" alt="model comparison"><figcaption>F1, critical-defect recall and cost per 1,000 images</figcaption></figure>
-<figure><img src="figures/per-class-recall.png" alt="per class recall"><figcaption>Per-class recall. Corrosion and surface damage are the readable classes; the fine-crack classes stay hard.</figcaption></figure>
+<p class="note">Critical recall counts crack and thunderstrike together. Cost uses list prices, not subscription allowances. p95 includes gateway retries.</p>
+<figure><img src="figures/model-compare.png" alt="model comparison"><figcaption>Quality, critical recall and cost across tiers</figcaption></figure>
+<figure><img src="figures/per-class-recall.png" alt="per class recall"><figcaption>Per-class recall. The escalated tier carries the fine-crack classes; the bulk tier carries surface damage.</figcaption></figure>
 
-<h2>What the numbers mean</h2>
+<h2>The tiering finding</h2>
 <ul>
-<li><b>Gemini is usable as a drafting copilot, not as a gate.</b> It catches about seven in ten critical defects and names the right class set for one image in five. That is enough to draft a finding for an engineer to approve, not enough to clear an image without review.</li>
-<li><b>DeepSeek is not viable for this task at similar cost.</b> Class-set F1 0.17 and critical recall 8 percent. Its image path is cheap but the visual grounding is far behind Gemini on fine surface defects.</li>
-<li><b>Cost is not the differentiator.</b> Both land near $0.40 to $0.46 per 1,000 images, which is trivial next to the labor it is meant to save. Model choice is a quality decision.</li>
+<li><b>Bulk tier, Gemini 3.5 Flash Lite.</b> 17.3% exact set match, F1 0.32, 50.0% critical recall at $0.43 per 1,000 images and 1.3 seconds. Good enough to draft, not to clear.</li>
+<li><b>Escalated tier, Gemini 4 Argon.</b> Critical recall rises to 96.2% with F1 0.42 at $3.64 per 1,000 and 5.7 seconds. Worth it for critical classes, not for every image.</li>
+<li><b>DeepSeek V4.1 Flash is not viable here.</b> 7.7% critical recall at roughly the bulk-tier price. Cheap image input does not buy visual grounding.</li>
 </ul>
 
+<h2>Routed cascade</h2>
+<p>The useful policy is not a single tier. Run the cheap tier on every image, then escalate only the images whose own confidence is below 0.9 to the strong tier. One cheap call always, a strong call on roughly a third of images.</p>
+<table><thead><tr><th>confidence gate</th><th>escalated</th><th>exact set</th><th>class F1</th><th>critical recall</th><th>cost / 1,000</th></tr></thead><tbody>
+<tr><td>0.50</td><td>30.7%</td><td>24.0%</td><td>0.406</td><td>88.5%</td><td>$1.54</td></tr><tr><td>0.60</td><td>30.7%</td><td>24.0%</td><td>0.406</td><td>88.5%</td><td>$1.54</td></tr><tr><td>0.70</td><td>30.7%</td><td>24.0%</td><td>0.406</td><td>88.5%</td><td>$1.54</td></tr><tr><td>0.80</td><td>30.7%</td><td>24.0%</td><td>0.406</td><td>88.5%</td><td>$1.54</td></tr><tr><td>0.90</td><td>36.0%</td><td>25.3%</td><td>0.424</td><td>92.3%</td><td>$1.73</td></tr><tr><td>0.95</td><td>36.0%</td><td>25.3%</td><td>0.424</td><td>92.3%</td><td>$1.73</td></tr>
+</tbody></table>
+<figure><img src="figures/cascade.png" alt="routed cascade"><figcaption>Cost against critical recall. The routed cascade sits above the line between the two single tiers.</figcaption></figure>
+<p class="note">At a 0.9 gate the cascade reaches 92.3% critical recall and F1 0.42 for $1.73 per 1,000, against $3.64 for the strong tier alone. That is the business case: most of the strong tier's recall at under half its cost.</p>
+
 <h2>Video sweep</h2>
-<p>Gemini 3.5 Flash Lite accepts video directly, so the same workflow runs on a short drone sweep. An eight-second clip built from eight inspection frames, one frame per second, produced a per-second condition log: 3 of 5 critical frames flagged, exact class set on 12.5% of frames, 689 prompt tokens.</p>
+<p>Gemini accepts video directly, so the same workflow runs on a short drone sweep. An eight-second clip built from eight frames produced a per-second condition log: 3 of 5 critical frames flagged, exact class set on 12.5% of frames, 689 prompt tokens.</p>
 <table><thead><tr><th>second</th><th>annotated</th><th>copilot</th></tr></thead><tbody><tr><td>0</td><td>crack</td><td>surface_injure</td></tr><tr><td>1</td><td>crack</td><td>surface_injure</td></tr><tr><td>2</td><td>surface_injure, thunderstrike</td><td>thunderstrike</td></tr><tr><td>3</td><td>thunderstrike</td><td>thunderstrike</td></tr><tr><td>4</td><td>surface_injure, thunderstrike</td><td>thunderstrike</td></tr><tr><td>5</td><td>hide_craze, surface_injure</td><td>surface_injure</td></tr><tr><td>6</td><td>corrosion</td><td>craze, surface_injure</td></tr><tr><td>7</td><td>corrosion</td><td>hide_craze</td></tr></tbody></table>
-<p class="note">Eight frames is a demonstration, not a benchmark. It shows the video path works and that the model tracks defects across a sweep.</p>
+<p class="note">Eight frames is a demonstration, not a benchmark. It shows the video path works and tracks defects across a sweep.</p>
 
 <h2>Business case</h2>
-<p>The model numbers above are measured. The labor numbers below are inputs you can change.</p>
+<p>Model numbers are measured. Labor is an input you can change.</p>
 <div class="calc">
 <label>Inspection images per month <input id="img" type="number" value="2000"></label>
 <label>Manual minutes per finding <input id="manual" type="number" value="4"></label>
 <label>Copilot review seconds per image <input id="review" type="number" value="45"></label>
 <label>Loaded engineer cost per hour (USD) <input id="rate" type="number" value="18"></label>
+<label>Share of images escalated to the high tier (%) <input id="esc" type="number" value="20"></label>
 <div class="out" id="out"></div>
 </div>
-<p class="note">Model cost uses the measured $0.46 per 1,000 images. Review time assumes the engineer checks the draft rather than writing from scratch.</p>
+<p class="note">Model cost is the bulk tier on every image plus the strong tier on the escalated share. Review time assumes the engineer checks a draft rather than writing one.</p>
 
 <h2>What is strong, what is weak</h2>
-<p><b>Strong.</b> Real drone imagery (CC BY 4.0), a fixed taxonomy, two model families measured on the same images, cost and latency per 1,000, a working video path, and a business case whose inputs are visible.</p>
-<p><b>Weak.</b> No healthy images in the source dataset, so specificity and false-clear rate cannot be reported. The dataset is annotated by one source, and craze versus hide_craze is a genuinely ambiguous boundary. 75 images and one seed, so the intervals are wide. p95 includes gateway retries. The copilot drafts; it does not clear.</p>
+<p><b>Strong.</b> Real drone imagery (CC BY 4.0), fixed taxonomy, three tiers measured on the same 75 images, a routed cost model, a confidence gate, a working video path, and a business case whose inputs are visible.</p>
+<p><b>Weak.</b> No healthy images in the source data, so no specificity or false-clear claim. 75 images and one seed. Craze versus hide_craze is ambiguous even for annotators. p95 includes retries. The copilot drafts; it does not approve.</p>
 
 <h2>Reproduce</h2>
 <pre class="note">uv run python scripts/run_eval.py --model both --per-class 13
@@ -83,12 +94,12 @@ function calc(){
   const manual=+document.getElementById('manual').value||0;
   const review=+document.getElementById('review').value||0;
   const rate=+document.getElementById('rate').value||0;
+  const esc=(+document.getElementById('esc').value||0)/100;
   const manualH=img*manual/60, coopH=img*review/3600;
-  const saved=manualH-coopH;
-  const money=saved*rate;
-  const model=img/1000*0.4634;
+  const saved=manualH-coopH, money=saved*rate;
+  const model=(img/1000)*(0.4263+esc*3.6429);
   document.getElementById('out').innerHTML =
     `<b>${saved.toFixed(0)} engineer-hours saved per month</b> (${manualH.toFixed(0)}h manual vs ${coopH.toFixed(0)}h reviewing drafts), worth about ${money.toFixed(0)} at the loaded rate. Model cost about ${model.toFixed(2)} per month.`;
 }
-['img','manual','review','rate'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
+['img','manual','review','rate','esc'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
 </script></body></html>

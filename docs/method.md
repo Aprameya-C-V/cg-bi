@@ -12,8 +12,13 @@ Sampling is stratified by class, 13 images per class, deduplicated across multi-
 
 ## Models
 
-- `gemini-3.5-flash-lite`: image and video input, JSON response mode, temperature 0.
-- `deepseek-v4.1-flash`: image input through an OpenAI-compatible gateway, JSON object mode, temperature 0.
+- `gemini-3.5-flash-lite`: image and video input, JSON response mode, per-class confidence, temperature 0.
+- `gemini-4-argon`: same prompt, run through the OpenAI-compatible gateway, used as the escalation tier.
+- `deepseek-v4.1-flash`: image input through the same gateway, JSON object mode.
+
+## Routed cascade
+
+Every image goes to the cheap tier. Images whose highest class confidence is below a threshold are re-run on the strong tier, and the strong tier's answer replaces the cheap one. Thresholds from 0.5 to 0.95 are swept; escalation share, exact match, F1, critical recall and blended cost are reported. Blended cost charges the cheap call on every image plus the strong call on the escalated share.
 
 Both receive the same prompt: a fixed taxonomy with one-line definitions, and a JSON schema of defects, severity, location and notes.
 

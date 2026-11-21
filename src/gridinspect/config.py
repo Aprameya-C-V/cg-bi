@@ -29,6 +29,7 @@ PRICES = {
     "gemini-3.5-flash-lite": Price(0.30, 2.50),
     "gemini-3.8-flash": Price(0.75, 3.75),
     "deepseek-v4.1-flash": Price(0.15, 0.60),
+    "gemini-4-argon": Price(2.00, 10.00),
 }
 
 
