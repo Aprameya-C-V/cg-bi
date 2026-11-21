@@ -122,8 +122,8 @@ def thumbnail(argon: dict) -> None:
     ax.set_xlim(0, 12); ax.set_ylim(0, 6.3); ax.axis("off")
     ax.add_patch(plt.Rectangle((0, 0), 12, 6.3, color=PAPER))
     ax.add_patch(plt.Rectangle((0, 6.1), 12, 0.2, color=ACCENT))
-    ax.text(0.7, 4.9, "Blade Inspection Copilot", fontsize=30, color=INK, weight="bold")
-    ax.text(0.7, 4.35, "Multimodal triage and report drafting for wind turbine blade inspections", fontsize=12, color=MUTED)
+    ax.text(0.7, 4.9, "CG-BI", fontsize=34, color=INK, weight="bold")
+    ax.text(0.7, 4.35, "Confidence-gated cascade triage for wind turbine blade inspection", fontsize=12, color=MUTED)
     stats = [("96%", "critical recall, strong tier"), ("$1.73", "per 1,000, routed cascade"), ("36%", "images escalated")]
     for i, (v, l) in enumerate(stats):
         x = 0.7 + i * 3.8
@@ -177,7 +177,7 @@ def main() -> None:
 
     html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blade Inspection Copilot</title>
+<title>CG-BI</title>
 <style>
 :root{{--paper:{PAPER};--ink:{INK};--muted:{MUTED};--rule:{RULE};--accent:{ACCENT}}}
 *{{box-sizing:border-box}}
@@ -205,8 +205,8 @@ ul{{margin:10px 0 10px 18px;padding:0}} li{{margin:6px 0}}
 code{{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#e9e4d8;padding:1px 5px;border-radius:3px}}
 </style></head><body><div class="bar"></div><main>
 <p class="eyebrow">Industry study · Renewable energy O&amp;M · November 2026</p>
-<h1>Blade Inspection Copilot</h1>
-<p class="lede">Drone photos of wind turbine blades, triaged by a multimodal model that names the defect, grades severity, and drafts the technician note. Three model tiers, 75 real inspection images, and a confidence gate for routing.</p>
+<h1>CG-BI</h1>
+<p class="lede">Confidence-gated cascade triage for multimodal wind turbine blade inspection. Drone photos in, a named defect, severity, location and technician note out, with a cheap tier on every image and a strong tier only where confidence is low. Measured on 75 real inspection images across three model tiers.</p>
 
 <h2>The business problem</h2>
 <p>Blade inspection is a documentation bottleneck. A drone captures hundreds of images per turbine and an engineer still writes a finding for each one: type, severity, location, action. The taxonomy is fixed across the fleet, so inconsistent wording and slow write-ups cost hours and break trend analysis.</p>
@@ -230,6 +230,10 @@ code{{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#e9e4d8
 <li><b>DeepSeek V4.1 Flash is not viable here.</b> {pct(ds['critical_recall'])} critical recall at roughly the bulk-tier price. Cheap image input does not buy visual grounding.</li>
 </ul>
 
+<h2>Examples</h2>
+<figure><img src="figures/examples.png" alt="example findings"><figcaption>Four real cases: a clean bulk-tier answer, a critical miss that escalation catches, a strong-tier critical answer, and a taxonomy error neither tier fixes.</figcaption></figure>
+<p class="note">Each panel shows the annotated class set, the bulk tier's answer and the strong tier's answer. The second panel is the case the cascade exists for: the bulk tier returned nothing, and the escalated call found the crack.</p>
+
 <h2>Routed cascade</h2>
 <p>The useful policy is not a single tier. Run the cheap tier on every image, then escalate only the images whose own confidence is below 0.9 to the strong tier. One cheap call always, a strong call on roughly a third of images.</p>
 <table><thead><tr><th>confidence gate</th><th>escalated</th><th>exact set</th><th>class F1</th><th>critical recall</th><th>cost / 1,000</th></tr></thead><tbody>
@@ -241,6 +245,7 @@ code{{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#e9e4d8
 <h2>Video sweep</h2>
 <p>Gemini accepts video directly, so the same workflow runs on a short drone sweep. An eight-second clip built from eight frames produced a per-second condition log: {vid['critical_hit']} of {vid['critical_n']} critical frames flagged, exact class set on {pct(vid['exact'])} of frames, {vid['tokens']} prompt tokens.</p>
 <table><thead><tr><th>second</th><th>annotated</th><th>copilot</th></tr></thead><tbody>{video_rows}</tbody></table>
+<figure><img src="figures/video-strip.png" alt="video strip"><figcaption>Frames from the sweep with the annotated classes and the model's per-second reading</figcaption></figure>
 <p class="note">Eight frames is a demonstration, not a benchmark. It shows the video path works and tracks defects across a sweep.</p>
 
 <h2>Business case</h2>
@@ -262,7 +267,7 @@ code{{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#e9e4d8
 <h2>Reproduce</h2>
 <pre class="note">uv run python scripts/run_eval.py --model both --per-class 13
 uv run python scripts/build_video.py
-uv run python scripts/report.py</pre>
+uv run python scripts/cascade.py\nuv run python scripts/examples.py\nuv run python scripts/report.py</pre>
 <p class="note">Data: Wind Turbine Blade Defect dataset, DOI 10.6084/m9.figshare.30210175, CC BY 4.0.</p>
 </main>
 <script>

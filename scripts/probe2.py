@@ -29,7 +29,7 @@ def deepseek(p):
           "messages":[{"role":"user","content":[{"type":"text","text":PROMPT},
           {"type":"image_url","image_url":{"url":"data:image/jpeg;base64,"+b64(p)}}]}]}
     r=httpx.post("https://opencode.ai/inference/go/openai/v1/chat/completions",
-                 headers={"Authorization":"Bearer "+KEY_GO,"content-type":"application/json","User-Agent":"gridinspect/0.1","x-opencode-session":"gridinspect-p1"},
+                 headers={"Authorization":"Bearer "+KEY_GO,"content-type":"application/json","User-Agent":"cgbi/0.1","x-opencode-session":"cgbi-p1"},
                  json=body,timeout=90)
     if r.status_code!=200: return {"error":r.status_code,"body":r.text[:120]}
     return json.loads(r.json()["choices"][0]["message"]["content"])

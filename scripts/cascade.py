@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from gridinspect.evaluate import summarize
+from cgbi.evaluate import summarize
 
 RUNS = Path("runs")
 

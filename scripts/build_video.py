@@ -1,8 +1,8 @@
 import asyncio, json, subprocess
 from pathlib import Path
-from gridinspect.data import CLASSES, load_manifest
-from gridinspect.prompts import VIDEO
-from gridinspect.providers import GeminiVision
+from cgbi.data import CLASSES, load_manifest
+from cgbi.prompts import VIDEO
+from cgbi.providers import GeminiVision
 
 D=Path("data/video"); D.mkdir(parents=True, exist_ok=True)
 man=load_manifest()

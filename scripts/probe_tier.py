@@ -1,6 +1,6 @@
 import asyncio, json, random, xml.etree.ElementTree as ET
 from pathlib import Path
-from gridinspect.providers import GeminiVision
+from cgbi.providers import GeminiVision
 
 D=Path("data/wtbd/WT blade defect dataset")
 CLASSES=["craze","hide_craze","corrosion","surface_injure","thunderstrike","crack"]

@@ -1,8 +1,8 @@
-# Blade Inspection Copilot
+# CG-BI
 
-![Blade Inspection Copilot](./thumbnail.png)
+![CG-BI](./thumbnail.png)
 
-Multimodal triage and report drafting for wind turbine blade inspections, with a confidence-gated model cascade.
+Confidence-gated cascade triage for multimodal wind turbine blade inspection.
 
 A drone captures hundreds of blade images per turbine. An engineer still writes a finding for each one: defect type, severity, location, action. This project measures whether a multimodal model can draft that finding, and what a two-tier routing policy buys over picking one model.
 
@@ -54,10 +54,11 @@ flowchart LR
 
 ## Repository layout
 
-- `src/gridinspect`: providers, prompts, dataset loader, evaluation and metrics
+- `src/cgbi`: providers, prompts, dataset loader, evaluation and metrics
 - `scripts/run_eval.py`: per-model evaluation
 - `scripts/cascade.py`: confidence-gated routing frontier
 - `scripts/build_video.py`: sweep video and per-second evaluation
+- `scripts/examples.py`: annotated case panels and the video strip
 - `scripts/report.py`: report, figures, thumbnail
 - `scripts/classify.py`: single-image CLI
 - `reports/report.html`: the study document

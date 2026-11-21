@@ -1,6 +1,6 @@
-from gridinspect.data import CLASSES, Sample, make_split
-from gridinspect.evaluate import summarize
-from gridinspect.providers import parse_json
+from cgbi.data import CLASSES, Sample, make_split
+from cgbi.evaluate import summarize
+from cgbi.providers import parse_json
 from pathlib import Path
 
 

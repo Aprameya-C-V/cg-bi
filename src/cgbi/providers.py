@@ -155,8 +155,8 @@ class DeepSeekVision(_Base):
         self._headers = {
             "Authorization": f"Bearer {go_key()}",
             "content-type": "application/json",
-            "User-Agent": "gridinspect/0.1",
-            "x-opencode-session": "gridinspect-eval",
+            "User-Agent": "cgbi/0.1",
+            "x-opencode-session": "cgbi-eval",
         }
 
     async def inspect_image(self, path: Path, prompt: str) -> VisionResult:

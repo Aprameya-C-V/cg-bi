@@ -5,13 +5,13 @@ import json
 import sys
 from pathlib import Path
 
-from gridinspect.providers import GeminiVision
+from cgbi.providers import GeminiVision
 
 
 async def main() -> None:
     model = GeminiVision("gemini-3.5-flash-lite")
     try:
-        result = await model.inspect_image(Path(sys.argv[1]), __import__("gridinspect.prompts", fromlist=["WIDE"]).WIDE)
+        result = await model.inspect_image(Path(sys.argv[1]), __import__("cgbi.prompts", fromlist=["WIDE"]).WIDE)
     finally:
         await model.aclose()
     payload = {}

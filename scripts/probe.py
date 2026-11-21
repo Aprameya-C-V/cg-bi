@@ -35,7 +35,7 @@ def deepseek(img):
     t=time.perf_counter()
     r=httpx.post("https://opencode.ai/inference/go/openai/v1/chat/completions",
                  headers={"Authorization":"Bearer "+go_key(),"content-type":"application/json",
-                          "User-Agent":"gridinspect/0.1","x-opencode-session":"gridinspect-p1"},
+                          "User-Agent":"cgbi/0.1","x-opencode-session":"cgbi-p1"},
                  json=body, timeout=90)
     ms=(time.perf_counter()-t)*1000
     print("deepseek", r.status_code, round(ms), r.text[:400])

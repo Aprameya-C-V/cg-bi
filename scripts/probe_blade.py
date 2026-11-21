@@ -1,7 +1,7 @@
 import json, base64, glob, xml.etree.ElementTree as ET
 from pathlib import Path
 import httpx
-from gridinspect.config import gemini_key
+from cgbi.config import gemini_key
 
 D=Path("data/wtbd/WT blade defect dataset")
 P="""You inspect aerial photos of wind turbine blades.

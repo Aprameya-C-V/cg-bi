@@ -4,9 +4,9 @@ import argparse
 import asyncio
 import json
 
-from gridinspect.data import load_manifest, make_split
-from gridinspect.evaluate import evaluate_model
-from gridinspect.providers import DeepSeekVision, GeminiVision
+from cgbi.data import load_manifest, make_split
+from cgbi.evaluate import evaluate_model
+from cgbi.providers import DeepSeekVision, GeminiVision
 
 
 async def main() -> None:
